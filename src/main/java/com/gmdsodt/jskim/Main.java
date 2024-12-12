@@ -10,7 +10,6 @@ public class Main {
             System.out.println(fs);
 
             Node node = fs.get("DIR1/LEAF.JPG");
-            System.out.println(node);
             if (node != null && node.exportTo("./output/LEAF.JPG")) {
                 System.out.println("Export Success: " + path);
             } else {

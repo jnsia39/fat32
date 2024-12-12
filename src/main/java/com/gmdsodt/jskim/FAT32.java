@@ -8,6 +8,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class FAT32 {
     FileSystem fs;
@@ -71,19 +72,33 @@ public class FAT32 {
     private Node expand(Node node) throws IOException {
         ByteBuffer buf = node.stream.readAll();
         byte[] bytes = new byte[0x20];
+        Stack<String> stack = new Stack<>();
 
         while (buf.hasRemaining()) {
             buf.get(bytes);
 
-            if (ByteUtil.onlyZeroesIn(bytes))
+            if (ByteUtil.onlyZeroesIn(bytes)) {
                 break;
+            }
+
+            ByteBuffer wrapBuf = ByteBuffer.wrap(bytes);
 
             DirEntry dirEntry = new DirEntry();
-            if (!dirEntry.analyze(ByteBuffer.wrap(bytes)))
+            if (!dirEntry.analyze(wrapBuf))
                 continue;
 
-            if (dirEntry.isLfn())
+            if (dirEntry.isLfn()) {
+                stack.add(dirEntry.makeLfnFrom(wrapBuf));
                 continue;
+            }
+
+            StringBuilder sb = new StringBuilder();
+
+            while (!stack.isEmpty()) {
+                sb.append(stack.pop());
+            }
+
+            dirEntry.name = sb.isEmpty() ? dirEntry.name : sb.toString();
 
             Node childNode = makeNode(dirEntry);
 
