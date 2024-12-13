@@ -2,9 +2,9 @@ package com.gmdsodt.jskim;
 
 import com.gmdsodt.jskim.util.ByteUtil;
 import com.gmdsodt.jskim.util.StreamReader;
+import tech.favware.result.Result;
 
 import java.io.IOException;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,57 +16,56 @@ public class FAT32 {
     BootRecord br;
     FATArea fatArea;
 
-    public FileSystem buildFileSystem(String path) throws Exception {
+    public Result<FileSystem> buildFileSystem(String path) throws Throwable {
         this.reader = new StreamReader();
-        if (!this.reader.loadFileChannel(path))
-            throw new IOException();
-
         this.br = new BootRecord();
-        if (!this.br.analyze(reader.getFileChannel()))
-            throw new IOException();
-
         this.fatArea = new FATArea();
-        if (!this.fatArea.makeFatChain(reader.readBuffer(this.br.reservedAreaSize, this.br.fatSize)))
-            throw new BufferUnderflowException();
-
         this.fs = new FileSystem();
-        if (!expandAll(makeRoot()))
-            throw new Exception("Can't open root folder");
 
-        return this.fs;
+        Result<Boolean> result = this.reader.loadFileChannel(path)
+                .flatMap((bool) -> this.br.analyze(reader.getFileChannel()))
+                .flatMap((bool) -> this.fatArea.makeFatChain(reader.readBuffer(this.br.reservedAreaSize, this.br.fatSize)))
+                .flatMap((bool) -> expandAll(makeRoot()));
+
+        // If there was an exception, throw an exception
+        if (!result.isOk())
+            result.unwrap();
+
+        return Result.ok(this.fs);
     }
 
     private Node makeRoot() {
-        List<Integer> clusters = this.fatArea.getClusters(this.br.rootClusterNo);
-        ScatteredStream stream = makeStream(clusters);
+        ScatteredStream stream = makeStream(this.br.rootClusterNo);
 
         return new Node(stream);
     }
 
     private Node makeNode(DirEntry dirEntry) {
-        List<Integer> clusters = this.fatArea.getClusters(dirEntry.clusterNo);
-        ScatteredStream stream = makeStream(clusters);
+        ScatteredStream stream = makeStream(dirEntry.clusterNo);
 
-        int allocSize = this.br.clusterSize * clusters.size();
+        int allocSize = this.br.clusterSize * stream.extents.size();
 
         return new Node(dirEntry.name, dirEntry.type, dirEntry.actualSize, allocSize, stream);
     }
 
-    private ScatteredStream makeStream(List<Integer> clusters) {
+    private ScatteredStream makeStream(int clusterNo) {
+        List<Integer> clusters = this.fatArea.getClusters(clusterNo);
         List<Extent> extents = new ArrayList<>();
 
-        for (int clusterNo: clusters) {
-            long offset = toPhysicalAddr(clusterNo);
+        for (int cluster: clusters) {
+            long offset = toPhysicalAddr(cluster);
             extents.add(new Extent(offset, this.br.clusterSize));
         }
 
         return new ScatteredStream(extents, reader.getFileChannel());
     }
 
-    private boolean expandAll(Node node) throws IOException {
+    private Result<Boolean> expandAll(Node node) throws IOException {
         Node rootNode = expand(node);
+        if (!fs.unfold(rootNode, ""))
+            return Result.err(new Exception("Exception from Unfold Process"));
 
-        return fs.unfold(rootNode, "");
+        return Result.ok(true);
     };
 
     private Node expand(Node node) throws IOException {
@@ -77,9 +76,8 @@ public class FAT32 {
         while (buf.hasRemaining()) {
             buf.get(bytes);
 
-            if (ByteUtil.onlyZeroesIn(bytes)) {
+            if (ByteUtil.onlyZeroesIn(bytes))
                 break;
-            }
 
             ByteBuffer wrapBuf = ByteBuffer.wrap(bytes);
 
@@ -94,9 +92,8 @@ public class FAT32 {
 
             StringBuilder sb = new StringBuilder();
 
-            while (!stack.isEmpty()) {
+            while (!stack.isEmpty())
                 sb.append(stack.pop());
-            }
 
             dirEntry.name = sb.isEmpty() ? dirEntry.name : sb.toString();
 

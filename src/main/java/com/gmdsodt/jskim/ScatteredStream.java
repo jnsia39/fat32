@@ -28,7 +28,7 @@ public class ScatteredStream {
 
     // Buffer.allocate 되는 size 너무 큼 => 자바 힙 메모리 초과될 수 있음
     public ByteBuffer read(long length) throws IOException {
-        ByteBuffer buf = ByteBuffer.allocate((int)length);
+        ByteBuffer buf = ByteBuffer.allocate((int) length);
         ByteBuffer readBuf;
         long totalMove = 0;
 

@@ -1,5 +1,7 @@
 package com.gmdsodt.jskim;
 
+import tech.favware.result.Result;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,9 +17,8 @@ public class FileSystem {
             for (Node child: node.children) {
                 String childPath = path + child.name;
 
-                if (child.isExpandable()) {
+                if (child.isExpandable())
                     unfold(child,childPath + "/");
-                }
 
                 nodes.put(path + child.name, child);
             }
@@ -28,8 +29,12 @@ public class FileSystem {
         return true;
     }
     
-    public Node get(String path) {
-        return nodes.get(path);
+    public Result<Node> get(String path) {
+        Node node = nodes.get(path);
+
+        return node == null
+                ? Result.err(new Exception("File Not Found"))
+                : Result.ok(node);
     }
 
     @Override

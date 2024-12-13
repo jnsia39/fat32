@@ -1,5 +1,7 @@
 package com.gmdsodt.jskim;
 
+import tech.favware.result.Result;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,7 +15,7 @@ public class BootRecord {
     int dataAreaAddr;
     int rootClusterNo;
 
-    public boolean analyze(FileChannel file) {
+    public Result<Boolean> analyze(FileChannel file) {
         try {
             ByteBuffer buf = ByteBuffer.allocate(0x200);
             buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -27,17 +29,17 @@ public class BootRecord {
             this.rootClusterNo = buf.position(44).getInt();
             int magicNo = buf.position(510).getShort() & 0xffff;
             if (magicNo != 0xAA55)
-                return false;
+                return Result.err(new Exception("Invalid Signature of Boot Record"));
 
             this.clusterSize = this.sectorSize * sectorsPerCluster;
             this.fatSize = this.sectorSize * sectorsPerFATSection;
             this.reservedAreaSize = sectorsOfReservedArea * this.sectorSize;
             this.dataAreaAddr = this.reservedAreaSize + this.fatSize * fatCount;
         } catch (IOException ex) {
-            return false;
+            return Result.err(new Exception("Exception from Boot Record"));
         }
 
-        return true;
+        return Result.ok(true);
     }
 
     @Override

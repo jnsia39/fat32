@@ -1,5 +1,7 @@
 package com.gmdsodt.jskim;
 
+import tech.favware.result.Result;
+
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -12,17 +14,17 @@ public class FATArea {
         this.fatInfo = new ArrayList<>();
     }
 
-    public boolean makeFatChain(ByteBuffer bb) {
+    public Result<Boolean> makeFatChain(ByteBuffer bb) {
         try {
             while (bb.hasRemaining()) {
                 int info = bb.getInt();
                 this.fatInfo.add(info);
             }
         } catch (BufferUnderflowException ex) {
-            return false;
+            return Result.err(new Exception("Exception from Make FAT Chain"));
         }
 
-        return true;
+        return Result.ok(true);
     }
 
     public int getNext(int clusterNo) {

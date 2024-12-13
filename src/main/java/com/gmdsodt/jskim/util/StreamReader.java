@@ -1,5 +1,7 @@
 package com.gmdsodt.jskim.util;
 
+import tech.favware.result.Result;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -12,15 +14,14 @@ public class StreamReader {
 
     public StreamReader() {}
 
-    public boolean loadFileChannel(String path) throws IOException {
+    public Result<Boolean> loadFileChannel(String path) throws IOException {
         try {
             this.file = new RandomAccessFile(path, "r").getChannel();
         } catch (IOException ex) {
-            throw new IOException("File Not Found");
-//            return false;
+            return Result.err(new IOException("File Not Found"));
         }
 
-        return true;
+        return Result.ok(true);
     }
 
     public FileChannel getFileChannel() {

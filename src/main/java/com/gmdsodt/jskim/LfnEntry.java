@@ -1,4 +1,11 @@
 package com.gmdsodt.jskim;
 
-public class LfnEntry {
+import java.util.Stack;
+
+public class LfnEntry extends Stack {
+    Stack<String> stack;
+
+    LfnEntry() {
+        this.stack = new Stack<>();
+    }
 }

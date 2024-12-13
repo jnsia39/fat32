@@ -2,6 +2,7 @@ package com.gmdsodt.jskim;
 
 import com.gmdsodt.jskim.type.NodeType;
 import com.gmdsodt.jskim.util.StringUtil;
+import tech.favware.result.Result;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,18 +33,19 @@ public class Node {
     }
 
     // TODO: Add exception other cases.
-    public boolean exportTo(String path) throws IOException {
+    public Result<Boolean> exportTo(String path) throws IOException {
         try {
-            new File(StringUtil.trimLastPath(path)).mkdirs();
+            if (!new File(StringUtil.trimLastPath(path)).mkdirs())
+                return Result.err(new Exception("Cannot Create Folders"));
 
             FileOutputStream fos = new FileOutputStream(path);
             ByteBuffer buf = this.stream.read(actualSize);
             fos.write(buf.array());
         } catch (IOException ex) {
-            return false;
+            return Result.err(new IOException("Fail to File Export"));
         }
 
-        return true;
+        return Result.ok(true);
     }
 
     public boolean isExpandable() {

@@ -1,22 +1,23 @@
 package com.gmdsodt.jskim;
 
+import tech.favware.result.Result;
+
 public class Main {
-    public static void main(String[] args) {
-        try {
-            String path = "./FAT32_simple.mdf";
+    public static void main(String[] args) throws Exception {
+            try {
+                String path = "./FAT32_simple.mdf";
 
-            FAT32 fat32 = new FAT32();
-            FileSystem fs = fat32.buildFileSystem(path);
-            System.out.println(fs);
+                FAT32 fat32 = new FAT32();
+                Result<?> result = fat32.buildFileSystem(path)
+                        .flatMap(fs -> fs.get("DIR1/LEAF.JPG"))
+                        .flatMap(node -> node.exportTo("./output/LEAF.JPG"));
 
-            Node node = fs.get("DIR1/LEAF.JPG");
-            if (node != null && node.exportTo("./output/LEAF.JPG")) {
-                System.out.println("Export Success: " + path);
-            } else {
-                System.out.println("Export Fail: " + path);
+                if (!result.isOk())
+                    result.unwrap();
+
+                System.out.println("Success File Export");
+            } catch (Throwable e) {
+                System.out.println(e.getMessage());
             }
-        } catch (Exception ex) {
-            System.out.println(ex);
-        }
     }
 }
