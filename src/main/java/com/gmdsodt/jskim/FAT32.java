@@ -16,22 +16,28 @@ public class FAT32 {
     BootRecord br;
     FATArea fatArea;
 
-    public Result<FileSystem> buildFileSystem(String path) throws Throwable {
+    private FAT32() {};
+
+    public static Result<FAT32> create() {
+        try {
+            return Result.ok(new FAT32());
+        } catch (Exception ex) {
+            return Result.err(ex);
+        }
+    }
+
+    public Result<FileSystem> buildFileSystem(String path) {
         this.reader = new StreamReader();
         this.br = new BootRecord();
         this.fatArea = new FATArea();
         this.fs = new FileSystem();
 
-        Result<Boolean> result = this.reader.loadFileChannel(path)
-                .flatMap((bool) -> this.br.analyze(reader.getFileChannel()))
-                .flatMap((bool) -> this.fatArea.makeFatChain(reader.readBuffer(this.br.reservedAreaSize, this.br.fatSize)))
-                .flatMap((bool) -> expandAll(makeRoot()));
+        Result<Boolean> res = this.reader.loadFileChannel(path)
+                .flatMap(b -> this.br.analyze(reader.getFileChannel()))
+                .flatMap(b -> this.fatArea.makeFatChain(reader.readBuffer(this.br.reservedAreaSize, this.br.fatSize)))
+                .flatMap(b -> expandAll(makeRoot()));
 
-        // If there was an exception, throw an exception
-        if (!result.isOk())
-            result.unwrap();
-
-        return Result.ok(this.fs);
+        return res.isOk() ? Result.ok(this.fs) : Result.err(new Exception("Exception"));
     }
 
     private Node makeRoot() {
@@ -42,7 +48,6 @@ public class FAT32 {
 
     private Node makeNode(DirEntry dirEntry) {
         ScatteredStream stream = makeStream(dirEntry.clusterNo);
-
         int allocSize = this.br.clusterSize * stream.extents.size();
 
         return new Node(dirEntry.name, dirEntry.type, dirEntry.actualSize, allocSize, stream);
@@ -82,11 +87,14 @@ public class FAT32 {
             ByteBuffer wrapBuf = ByteBuffer.wrap(bytes);
 
             DirEntry dirEntry = new DirEntry();
-            if (!dirEntry.analyze(wrapBuf))
+            if (!dirEntry.analyze(wrapBuf).isOk())
                 continue;
 
             if (dirEntry.isLfn()) {
-                stack.add(dirEntry.makeLfnFrom(wrapBuf));
+                Result<String> lfn = dirEntry.makeLfnFrom(wrapBuf);
+                if (lfn.isOk())
+                    lfn.map(stack::add);
+
                 continue;
             }
 

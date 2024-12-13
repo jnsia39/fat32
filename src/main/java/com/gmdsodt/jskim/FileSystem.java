@@ -33,7 +33,7 @@ public class FileSystem {
         Node node = nodes.get(path);
 
         return node == null
-                ? Result.err(new Exception("File Not Found"))
+                ? Result.err(new Exception("Node Not Found"))
                 : Result.ok(node);
     }
 

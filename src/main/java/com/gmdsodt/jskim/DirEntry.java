@@ -2,6 +2,7 @@ package com.gmdsodt.jskim;
 
 import com.gmdsodt.jskim.type.NodeType;
 import com.gmdsodt.jskim.util.StringUtil;
+import tech.favware.result.Result;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,7 +14,7 @@ public class DirEntry {
     int actualSize;
     NodeType type;
 
-    public boolean analyze(ByteBuffer bb) {
+    public Result<Boolean> analyze(ByteBuffer bb) {
         try {
             byte[] nameBytes = new byte[11];
             bb.get(nameBytes);
@@ -32,27 +33,35 @@ public class DirEntry {
             this.clusterNo = (clusterHi << 16) + clusterLo;
             this.actualSize = bb.getInt();
         } catch (Exception ex) {
-            return false;
+            return Result.err(ex);
         }
 
-        return true;
+        return Result.ok(true);
     }
 
-    public String makeLfnFrom(ByteBuffer buf) {
+    public Result<String> makeLfnFrom(ByteBuffer buf) {
         int[] offsets = {1, 3, 5, 7, 9, 14, 16, 18, 20, 22, 24, 28, 30};
         StringBuilder sb = new StringBuilder();
+        StringBuilder errMessages = new StringBuilder();
 
         for (int offset : offsets) {
-            char c = (char) buf.getShort(offset);
+            try {
+                char c = (char) buf.getShort(offset);
 
-            if (c == 0xFFFF)
-                break;
+                if (c == 0xFFFF)
+                    break;
 
-            if (c != 0x0000)
-                sb.append(c);
+                if (c != 0x0000)
+                    sb.append(c);
+            } catch (Exception ex) {
+                errMessages.append(ex.getMessage());
+            }
         }
 
-        return sb.toString();
+        if (!errMessages.isEmpty())
+            return Result.err(new Exception(errMessages.toString()));
+
+        return Result.ok(sb.toString());
     }
 
     public boolean isExpandable() {

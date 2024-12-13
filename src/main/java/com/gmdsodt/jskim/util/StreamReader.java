@@ -14,11 +14,11 @@ public class StreamReader {
 
     public StreamReader() {}
 
-    public Result<Boolean> loadFileChannel(String path) throws IOException {
+    public Result<Boolean> loadFileChannel(String path) {
         try {
             this.file = new RandomAccessFile(path, "r").getChannel();
         } catch (IOException ex) {
-            return Result.err(new IOException("File Not Found"));
+            return Result.err(new IOException("File Not Found: " + ex));
         }
 
         return Result.ok(true);

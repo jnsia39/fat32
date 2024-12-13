@@ -1,5 +1,7 @@
 package com.gmdsodt.jskim;
 
+import tech.favware.result.Result;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;

@@ -33,7 +33,7 @@ public class Node {
     }
 
     // TODO: Add exception other cases.
-    public Result<Boolean> exportTo(String path) throws IOException {
+    public Result<Boolean> exportTo(String path) {
         try {
             if (!new File(StringUtil.trimLastPath(path)).mkdirs())
                 return Result.err(new Exception("Cannot Create Folders"));
