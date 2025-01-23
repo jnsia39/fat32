@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
 public class Extent {
     long offset;

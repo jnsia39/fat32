@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
 import java.nio.ByteBuffer;
 import java.util.Stack;

@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim.util;
+package com.gmdsoft.jnsia.utils;
 
 public class StringUtil {
     public static String trimRight(String fileName) {

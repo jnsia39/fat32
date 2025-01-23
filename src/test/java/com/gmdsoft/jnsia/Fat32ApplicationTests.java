@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,11 +1,12 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
-import com.gmdsodt.jskim.util.ByteUtil;
-import com.gmdsodt.jskim.util.StreamReader;
+import com.gmdsoft.jnsia.utils.ByteUtil;
+import com.gmdsoft.jnsia.utils.StreamReader;
 import tech.favware.result.Result;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -13,8 +14,11 @@ import java.util.Stack;
 public class FAT32 {
     FileSystem fs;
     StreamReader reader;
-    BootRecord br;
+    BootRecord bootRecord;
     FATArea fatArea;
+
+    // 임의로 넣은 property
+    String filePath;
 
     private FAT32() {};
 
@@ -26,29 +30,37 @@ public class FAT32 {
         }
     }
 
-    public Result<FileSystem> buildFileSystem(String path) {
-        this.reader = new StreamReader();
-        this.br = new BootRecord();
+    public Result<FileSystem> buildFileSystem(String[] paths) {
+        this.bootRecord = new BootRecord();
         this.fatArea = new FATArea();
         this.fs = new FileSystem();
 
-        Result<Boolean> res = this.reader.loadFileChannel(path)
-                .flatMap(b -> this.br.analyze(reader.getFileChannel()))
-                .flatMap(b -> this.fatArea.makeFatChain(reader.readBuffer(this.br.reservedAreaSize, this.br.fatSize)))
-                .flatMap(b -> expandAll(makeRoot()));
+        // 임의로 넣은 property
+        this.filePath = paths[0];
 
-        return res.isOk() ? Result.ok(this.fs) : Result.err(new Exception("Exception"));
+        Result<Boolean> res = FileChannelPool.addFileChannel(this.filePath)
+                .flatMap(fileChannel -> this.bootRecord.analyze(fileChannel))
+                .flatMap(fileChannel -> readFatArea(fileChannel))
+                .flatMap(FatArea -> this.fatArea.makeFatChain(FatArea))
+                .flatMap(fatChain -> expandAll(makeRoot()));
+        System.out.println(res);
+
+        return res.isOk() ? Result.ok(this.fs) : Result.err(new Exception());
+    }
+
+    private Result<ByteBuffer> readFatArea(FileChannel fileChannel) {
+       return StreamReader.readFileChannel(fileChannel, this.bootRecord.reservedAreaSize, this.bootRecord.fatSize);
     }
 
     private Node makeRoot() {
-        ScatteredStream stream = makeStream(this.br.rootClusterNo);
+        ScatteredStream stream = makeStream(this.bootRecord.rootClusterNo);
 
         return new Node(stream);
     }
 
     private Node makeNode(DirEntry dirEntry) {
         ScatteredStream stream = makeStream(dirEntry.clusterNo);
-        int allocSize = this.br.clusterSize * stream.extents.size();
+        int allocSize = this.bootRecord.clusterSize * stream.extents.size();
 
         return new Node(dirEntry.name, dirEntry.type, dirEntry.actualSize, allocSize, stream);
     }
@@ -59,14 +71,15 @@ public class FAT32 {
 
         for (int cluster: clusters) {
             long offset = toPhysicalAddr(cluster);
-            extents.add(new Extent(offset, this.br.clusterSize));
+            extents.add(new Extent(offset, this.bootRecord.clusterSize));
         }
 
-        return new ScatteredStream(extents, reader.getFileChannel());
+        return new ScatteredStream(extents, FileChannelPool.getFileChannel(this.filePath).orElse(null));
     }
 
     private Result<Boolean> expandAll(Node node) throws IOException {
         Node rootNode = expand(node);
+
         if (!fs.unfold(rootNode, ""))
             return Result.err(new Exception("Exception from Unfold Process"));
 
@@ -107,8 +120,9 @@ public class FAT32 {
 
             Node childNode = makeNode(dirEntry);
 
-            if (dirEntry.isExpandable())
+            if (dirEntry.isExpandable()) {
                 childNode = expand(childNode);
+            }
 
             node.children.add(childNode);
         }
@@ -117,7 +131,7 @@ public class FAT32 {
     }
 
     private long toPhysicalAddr(int clusterNo) {
-        return this.br.dataAreaAddr + (long)(clusterNo - this.br.rootClusterNo) * this.br.clusterSize;
+        return this.bootRecord.dataAreaAddr + (long)(clusterNo - this.bootRecord.rootClusterNo) * this.bootRecord.clusterSize;
     }
 
     @Override

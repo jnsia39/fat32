@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
 import tech.favware.result.Result;
 
@@ -14,7 +14,7 @@ public class FATArea {
         this.fatInfo = new ArrayList<>();
     }
 
-    public Result<Boolean> makeFatChain(ByteBuffer bb) {
+    public Result<FATArea> makeFatChain(ByteBuffer bb) {
         try {
             while (bb.hasRemaining()) {
                 int info = bb.getInt();
@@ -24,7 +24,7 @@ public class FATArea {
             return Result.err(new Exception("Exception from Make FAT Chain"));
         }
 
-        return Result.ok(true);
+        return Result.ok(this);
     }
 
     public int getNext(int clusterNo) {

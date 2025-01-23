@@ -1,7 +1,7 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
-import com.gmdsodt.jskim.type.NodeType;
-import com.gmdsodt.jskim.util.StringUtil;
+import com.gmdsoft.jnsia.type.NodeType;
+import com.gmdsoft.jnsia.utils.StringUtil;
 import tech.favware.result.Result;
 
 import java.io.File;

@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim.type;
+package com.gmdsoft.jnsia.type;
 
 public enum NodeType {
     File,

@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim;
+package com.gmdsoft.jnsia;
 
 import tech.favware.result.Result;
 
@@ -15,11 +15,11 @@ public class BootRecord {
     int dataAreaAddr;
     int rootClusterNo;
 
-    public Result<Boolean> analyze(FileChannel file) {
+    public Result<FileChannel> analyze(FileChannel fileChannel) {
         try {
             ByteBuffer buf = ByteBuffer.allocate(0x200);
             buf.order(ByteOrder.LITTLE_ENDIAN);
-            file.read(buf);
+            fileChannel.read(buf);
 
             this.sectorSize = buf.position(11).getShort();
             int sectorsPerCluster = buf.get() & 0xff;
@@ -39,7 +39,7 @@ public class BootRecord {
             return Result.err(new Exception("Exception from Boot Record"));
         }
 
-        return Result.ok(true);
+        return Result.ok(fileChannel);
     }
 
     @Override

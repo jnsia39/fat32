@@ -1,4 +1,4 @@
-package com.gmdsodt.jskim.util;
+package com.gmdsoft.jnsia.utils;
 
 public class ByteUtil {
     public static boolean detectsNonZeroesFrom(byte[] bytes) {
