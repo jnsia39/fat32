@@ -1,4 +1,4 @@
-package com.gmdsoft.jnsia;
+package com.gmdsoft.jnsia.fat32;
 
 import com.gmdsoft.jnsia.type.NodeType;
 import com.gmdsoft.jnsia.utils.StringUtil;

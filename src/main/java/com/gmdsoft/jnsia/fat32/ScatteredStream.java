@@ -1,19 +1,24 @@
-package com.gmdsoft.jnsia;
+package com.gmdsoft.jnsia.fat32;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScatteredStream {
-    FileChannel file;
+    FileChannel fc;
     List<Extent> extents;
     long offset;
 
-    ScatteredStream(List<Extent> extents, FileChannel file) {
-        this.extents = extents;
+    ScatteredStream(FileChannel fc) {
         this.offset = 0L;
-        this.file = file;
+        this.fc = fc;
+        this.extents = new ArrayList<>();
+    }
+
+    public void pushExtent(Extent extent) {
+        this.extents.add(extent);
     }
 
     public ByteBuffer readAll() throws IOException {
@@ -41,7 +46,7 @@ public class ScatteredStream {
             readBuf = ByteBuffer.allocate(move);
 
             this.offset += extentOffset;
-            this.file.position(this.offset).read(readBuf);
+            this.fc.position(this.offset).read(readBuf);
             this.offset = 0;
 
             buf.put(readBuf.flip());

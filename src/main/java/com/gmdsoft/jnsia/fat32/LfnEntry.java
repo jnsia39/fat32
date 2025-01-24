@@ -1,4 +1,4 @@
-package com.gmdsoft.jnsia;
+package com.gmdsoft.jnsia.fat32;
 
 import java.nio.ByteBuffer;
 import java.util.Stack;

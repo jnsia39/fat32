@@ -1,4 +1,4 @@
-package com.gmdsoft.jnsia;
+package com.gmdsoft.jnsia.fat32;
 
 import com.gmdsoft.jnsia.type.NodeType;
 import com.gmdsoft.jnsia.utils.StringUtil;
@@ -20,23 +20,18 @@ public class Node {
     ScatteredStream stream;
 
     Node(ScatteredStream stream) {
-        this(".", NodeType.Directory, 0, 0, stream);
-    }
-
-    Node(String name, NodeType type, int actualSize, int allocSize, ScatteredStream stream) {
-        this.name = name;
-        this.type = type;
-        this.actualSize = actualSize;
-        this.allocSize = allocSize;
         this.stream = stream;
         this.children = new ArrayList<>();
     }
 
     // TODO: Add exception other cases.
-    public Result<Boolean> exportTo(String path) {
+    public Result<String> exportTo(String path) {
         try {
-            if (!new File(StringUtil.trimLastPath(path)).mkdirs())
-                return Result.err(new Exception("Cannot Create Folders"));
+            File parentDir = new File(StringUtil.trimLastPath(path));
+
+            if (!parentDir.exists()) {
+                parentDir.mkdirs();
+            }
 
             FileOutputStream fos = new FileOutputStream(path);
             ByteBuffer buf = this.stream.read(actualSize);
@@ -45,7 +40,7 @@ public class Node {
             return Result.err(new IOException("Fail to File Export"));
         }
 
-        return Result.ok(true);
+        return Result.ok("Success");
     }
 
     public boolean isExpandable() {
@@ -61,6 +56,22 @@ public class Node {
 
     public boolean isFile() {
         return this.type == NodeType.File;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setType(NodeType type) {
+        this.type = type;
+    }
+
+    public void setActualSize(int actualSize) {
+        this.actualSize = actualSize;
+    }
+
+    public void setAllocSize(int allocSize) {
+        this.allocSize = allocSize;
     }
 
     @Override

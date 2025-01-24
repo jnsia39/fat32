@@ -1,4 +1,4 @@
-package com.gmdsoft.jnsia;
+package com.gmdsoft.jnsia.fat32;
 
 public class Extent {
     long offset;
